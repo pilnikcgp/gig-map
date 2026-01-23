@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Mapa koncertů</title>
+  </head>
+
+  <body>
+    <div id="app">
+      <!-- ===== SIDEBAR ===== -->
+      <div id="sidebar">
+        <!-- AUTH -->
+        <div id="auth"></div>
+
+        <!-- ADMIN PANEL (zobrazuje se až po přihlášení) -->
+        <div id="admin-panel" style="display: none">
+          <hr />
+
+          <h3>Přidat koncert</h3>
+
+          <label>
+            Kapela
+            <select id="sidebar-band">
+              <option value="Kupodivu">Kupodivu</option>
+              <option value="Big Band Lanškroun">Big Band Lanškroun</option>
+              <option value="Homoguru">Homoguru</option>
+              <option value="Poletíme?">Poletíme?</option>
+              <option value="The People">The People</option>
+              <option value="Ostatní">Ostatní</option>
+            </select>
+          </label>
+
+          <label>
+            Město
+            <input id="sidebar-city" placeholder="Např. Brno" />
+          </label>
+
+          <button id="find-place">Najít místo</button>
+
+          <div id="confirm-panel" style="display: none; margin-top: 8px">
+            <button id="confirm-concert">Potvrdit koncert</button>
+            <button id="cancel-concert">Zrušit</button>
+          </div>
+
+          <hr />
+
+          <p style="font-size: 13px; line-height: 1.4">
+            ➕ <strong>Přidání:</strong> pravý klik do mapy nebo vyhledání
+            města<br />
+            ❌ <strong>Smazání:</strong> pravý klik na bod
+          </p>
+        </div>
+      </div>
+
+      <!-- ===== MAPA ===== -->
+      <div id="map"></div>
+    </div>
+
+    <!-- Hlavní script -->
+    <script type="module" src="/src/index.ts"></script>
+  </body>
+</html>
