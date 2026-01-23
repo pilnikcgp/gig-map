@@ -1,24 +1,15 @@
 {
-  "name": "vanilla-typescript",
+  "name": "gig-map",
   "version": "1.0.0",
-  "description": "JavaScript and TypeScript example starter project",
-  "main": "index.html",
+  "private": true,
   "scripts": {
-  "build": "parcel build index.html --public-url ./"
-}
-
+    "build": "parcel build index.html --public-url ./"
+  },
   "dependencies": {
     "parcel-bundler": "1.6.1",
     "leaflet": "1.9.4"
   },
   "devDependencies": {
     "typescript": "4.4.4"
-  },
-  "resolutions": {
-    "@babel/preset-env": "7.13.8"
-  },
-  "keywords": [
-    "typescript",
-    "javascript"
-  ]
+  }
 }
