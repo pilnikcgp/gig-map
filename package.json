@@ -4,9 +4,9 @@
   "description": "JavaScript and TypeScript example starter project",
   "main": "index.html",
   "scripts": {
-    "start": "parcel index.html",
-    "build": "parcel build src/index.html --public-url ./"
-  },
+  "build": "parcel build index.html --public-url ./"
+}
+
   "dependencies": {
     "parcel-bundler": "1.6.1",
     "leaflet": "1.9.4"
