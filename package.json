@@ -6,6 +6,7 @@
     "build": "parcel build index.html --public-url ./"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.39.7"
     "parcel-bundler": "1.6.1",
     "leaflet": "1.9.4"
   },
