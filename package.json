@@ -1,17 +1,17 @@
 {
   "name": "vanilla-typescript",
   "version": "1.0.0",
-  "description": "JavaScript and TypeScript example starter project",
+  "description": "Gig map",
   "main": "index.html",
   "scripts": {
-    "build": "parcel build index.html --public-url ./"
+    "build": "parcel build index.html --dist-dir dist --public-url ./"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.7",
-    "parcel-bundler": "1.6.1",
     "leaflet": "1.9.4"
   },
   "devDependencies": {
+    "parcel": "^2.10.3",
     "typescript": "4.4.4"
   },
   "resolutions": {
