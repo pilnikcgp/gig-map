@@ -1,6 +1,13 @@
+import { createClient } from "@supabase/supabase-js";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "./styles.css";
+
+const SUPABASE_URL = "https://hvafjlqhichtfcwcmkfj.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2YWZqbHFoaWNodGZjd2Nta2ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxODU3NzEsImV4cCI6MjA4NDc2MTc3MX0.f99YTmFSNRNgBqFOsNU-WZlXAb0OYDAkfyZ8f-YEHbM";
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 
 /* ================= MAPA ================= */
 const map = L.map("map").setView([49.8175, 15.473], 7);
@@ -130,6 +137,20 @@ type Concert = {
 
 const STORAGE_KEY = "concerts";
 let concerts: Concert[] = [];
+
+async function loadConcertsFromDB(): Promise<Concert[]> {
+  const { data, error } = await supabase
+    .from("concerts")
+    .select("id, band, lat, lng");
+
+  if (error) {
+    console.error("Supabase error:", error);
+    return [];
+  }
+
+  return data as Concert[];
+}
+
 
 /* ================= MARKERY ================= */
 const markersByBand: Record<Band, L.CircleMarker[]> = {
@@ -360,7 +381,13 @@ function cleanupPreview() {
 }
 
 /* ================= INIT ================= */
-concerts = loadConcerts();
-concerts.forEach(addConcertMarker);
-renderLegend();
-renderAuthUI();
+
+async function initApp() {
+  const concerts = await loadConcertsFromDB();
+
+  concerts.forEach(addConcertMarker);
+  renderLegend();
+  renderAuthUI();
+}
+
+initApp();
