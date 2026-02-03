@@ -2,7 +2,6 @@
   "name": "vanilla-typescript",
   "version": "1.0.0",
   "description": "Gig map",
-  "main": "index.html",
   "scripts": {
     "build": "parcel build index.html --dist-dir dist --public-url ./"
   },
