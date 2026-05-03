@@ -22,6 +22,15 @@
     "buffer": "buffer",
     "process": "process/browser"
   },
+  "targets": {
+    "default": {
+      "context": "browser",
+      "engines": {
+        "browsers": "> 0.5%, last 2 versions, not dead"
+      }
+    }
+  },
+  "browserslist": "> 0.5%, last 2 versions, not dead",
   "keywords": [
     "typescript",
     "javascript"
