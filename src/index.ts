@@ -24,13 +24,6 @@ const ADMIN_PASSWORD = "tajne-heslo";
 /* ================= PREVIEW ================= */
 let previewMarker: L.Marker | null = null;
 let previewLatLng: { lat: number; lng: number } | null = null;
-let isDraggingPreview = false;
-
-function onPreviewDrag(e: L.LeafletMouseEvent) {
-  if (!previewMarker) return;
-  previewMarker.setLatLng(e.latlng);
-  previewLatLng = { lat: e.latlng.lat, lng: e.latlng.lng };
-}
 
 const previewIcon = L.divIcon({
   className: "",
@@ -135,7 +128,6 @@ type Concert = {
   lng: number;
 };
 
-const STORAGE_KEY = "concerts";
 let concerts: Concert[] = [];
 
 async function loadConcertsFromDB(): Promise<Concert[]> {
@@ -144,13 +136,40 @@ async function loadConcertsFromDB(): Promise<Concert[]> {
     .select("id, band, lat, lng");
 
   if (error) {
-    console.error("Supabase error:", error);
+    console.error("Supabase load error:", error);
+    alert("Nepodařilo se načíst koncerty z databáze. Detaily v konzoli.");
     return [];
   }
 
   return data as Concert[];
 }
 
+async function insertConcertToDB(concert: Concert): Promise<boolean> {
+  const { error } = await supabase.from("concerts").insert({
+    id: concert.id,
+    band: concert.band,
+    lat: concert.lat,
+    lng: concert.lng,
+  });
+
+  if (error) {
+    console.error("Supabase insert error:", error);
+    alert("Koncert se nepodařilo uložit. Detaily v konzoli.");
+    return false;
+  }
+  return true;
+}
+
+async function deleteConcertFromDB(id: string): Promise<boolean> {
+  const { error } = await supabase.from("concerts").delete().eq("id", id);
+
+  if (error) {
+    console.error("Supabase delete error:", error);
+    alert("Koncert se nepodařilo smazat. Detaily v konzoli.");
+    return false;
+  }
+  return true;
+}
 
 /* ================= MARKERY ================= */
 const markersByBand: Record<Band, L.CircleMarker[]> = {
@@ -171,26 +190,20 @@ const activeBands: Record<Band, boolean> = {
   Ostatní: true,
 };
 
-/* ================= STORAGE ================= */
-function saveConcerts() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(concerts));
-}
-
-function loadConcerts(): Concert[] {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  return raw ? JSON.parse(raw) : [];
-}
-
 /* ================= CREATE ================= */
-function createConcert(band: Band, lat: number, lng: number) {
+async function createConcert(band: Band, lat: number, lng: number) {
   const concert: Concert = {
     id: crypto.randomUUID(),
     band,
     lat,
     lng,
   };
+
+  // Nejdřív zápis do DB, až po úspěchu lokální stav + marker
+  const ok = await insertConcertToDB(concert);
+  if (!ok) return;
+
   concerts.push(concert);
-  saveConcerts();
   addConcertMarker(concert);
   renderLegend();
 }
@@ -217,13 +230,16 @@ function addConcertMarker(concert: Concert) {
       .openOn(map);
 
     setTimeout(() => {
-      document.getElementById("del")!.onclick = () => {
+      document.getElementById("del")!.onclick = async () => {
+        // Nejdřív DB, až po úspěchu odstraníme z mapy a stavu
+        const ok = await deleteConcertFromDB(concert.id);
+        if (!ok) return;
+
         map.removeLayer(marker);
         markersByBand[concert.band] = markersByBand[concert.band].filter(
           (m) => m !== marker
         );
         concerts = concerts.filter((c) => c.id !== concert.id);
-        saveConcerts();
         renderLegend();
         map.closePopup();
       };
@@ -249,6 +265,7 @@ legend.onAdd = () => {
 legend.addTo(map);
 
 function renderLegend() {
+  if (!legendContainer) return;
   legendContainer.innerHTML = "";
   bands.forEach((band) => {
     const count = concerts.filter((c) => c.band === band).length;
@@ -330,24 +347,10 @@ document.getElementById("find-place")?.addEventListener("click", async () => {
 
   map.setView([result.lat, result.lng], 11);
 
-  // === DRAG LOGIKA ===
-
-  // začátek tahu
+  // při tahu aktualizujeme uloženou pozici
   previewMarker.on("drag", (e) => {
-    const pos = e.target.getLatLng();
+    const pos = (e.target as L.Marker).getLatLng();
     previewLatLng = { lat: pos.lat, lng: pos.lng };
-  });
-
-  // pohyb
-  map.on("mousemove", (e) => {
-    if (!isDraggingPreview || !previewMarker) return;
-    previewMarker.setLatLng(e.latlng);
-    previewLatLng = { lat: e.latlng.lat, lng: e.latlng.lng };
-  });
-
-  // konec tahu
-  map.on("mouseup", () => {
-    isDraggingPreview = false;
   });
 
   // zobraz potvrzovací panel
@@ -356,13 +359,13 @@ document.getElementById("find-place")?.addEventListener("click", async () => {
 });
 
 /* ================= CONFIRM / CANCEL ================= */
-document.getElementById("confirm-concert")?.addEventListener("click", () => {
+document.getElementById("confirm-concert")?.addEventListener("click", async () => {
   if (!previewLatLng) return;
 
   const band = (document.getElementById("sidebar-band") as HTMLSelectElement)
     .value as Band;
 
-  createConcert(band, previewLatLng.lat, previewLatLng.lng);
+  await createConcert(band, previewLatLng.lat, previewLatLng.lng);
 
   cleanupPreview();
 });
@@ -372,7 +375,6 @@ document
   ?.addEventListener("click", cleanupPreview);
 
 function cleanupPreview() {
-  map.off("mousemove", onPreviewDrag);
   if (previewMarker) map.removeLayer(previewMarker);
   previewMarker = null;
   previewLatLng = null;
@@ -383,7 +385,8 @@ function cleanupPreview() {
 /* ================= INIT ================= */
 
 async function initApp() {
-  const concerts = await loadConcertsFromDB();
+  // POZOR: přiřazujeme do GLOBÁLNÍ `concerts`, žádné `const concerts = ...`
+  concerts = await loadConcertsFromDB();
 
   concerts.forEach(addConcertMarker);
   renderLegend();
