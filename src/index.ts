@@ -2,63 +2,61 @@ import { createClient } from "@supabase/supabase-js";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "./styles.css";
- 
+
 const SUPABASE_URL = "https://hvafjlqhichtfcwcmkfj.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2YWZqbHFoaWNodGZjd2Nta2ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxODU3NzEsImV4cCI6MjA4NDc2MTc3MX0.f99YTmFSNRNgBqFOsNU-WZlXAb0OYDAkfyZ8f-YEHbM";
- 
+
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
- 
+
 /* ================= DETEKCE MOBILU ================= */
 const isMobile = window.matchMedia("(max-width: 768px)").matches;
 const MARKER_RADIUS = isMobile ? 8 : 6;
- 
+
 /* ================= MAPA ================= */
 const map = L.map("map", {
   zoomControl: false,
   attributionControl: false,
 }).setView([49.8175, 15.473], 7);
- 
+
 L.control.zoom({ position: "bottomright" }).addTo(map);
 L.control.attribution({ position: "bottomleft" }).addTo(map);
- 
+
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "&copy; OpenStreetMap",
 }).addTo(map);
- 
+
 /* ================= HAMBURGER / SIDEBAR ================= */
 const appEl = document.getElementById("app")!;
 const hamburgerBtn = document.getElementById("hamburger")!;
-const sidebarCloseBtn = document.getElementById("sidebar-close")!;
 const sidebarOverlay = document.getElementById("sidebar-overlay")!;
- 
+
 function toggleSidebar() {
   appEl.classList.toggle("sidebar-open");
 }
- 
+
 function closeSidebar() {
   appEl.classList.remove("sidebar-open");
 }
- 
+
 hamburgerBtn.addEventListener("click", toggleSidebar);
-sidebarCloseBtn.addEventListener("click", closeSidebar);
 sidebarOverlay.addEventListener("click", closeSidebar);
- 
+
 /* ================= AUTH ================= */
 const AUTH_KEY = "isAuthenticated";
 let isAuthenticated = localStorage.getItem(AUTH_KEY) === "true";
 const ADMIN_PASSWORD = "tajne-heslo";
- 
+
 /* ================= PREVIEW ================= */
 let previewMarker: L.Marker | null = null;
 let previewLatLng: { lat: number; lng: number } | null = null;
- 
+
 const previewIcon = L.divIcon({
   className: "",
   html: `<div class="preview-marker"></div>`,
   iconSize: [16, 16],
   iconAnchor: [8, 8],
 });
- 
+
 /* ================= LOGIN UI ================= */
 function login(password: string) {
   if (password === ADMIN_PASSWORD) {
@@ -69,19 +67,19 @@ function login(password: string) {
     alert("Nesprávné heslo");
   }
 }
- 
+
 function logout() {
   isAuthenticated = false;
   localStorage.removeItem(AUTH_KEY);
   renderAuthUI();
 }
- 
+
 function renderAuthUI() {
   const authDiv = document.getElementById("auth")!;
   const adminPanel = document.getElementById("admin-panel")!;
- 
+
   authDiv.innerHTML = "";
- 
+
   if (!isAuthenticated) {
     adminPanel.style.display = "none";
     authDiv.innerHTML = `
@@ -103,23 +101,23 @@ function renderAuthUI() {
     document.getElementById("logout-btn")!.onclick = logout;
   }
 }
- 
+
 /* ================= GEO ================= */
 async function geocodeCity(city: string) {
   const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(
     city
   )}`;
- 
+
   const res = await fetch(url, { headers: { "Accept-Language": "cs" } });
   const data = await res.json();
   if (!data.length) return null;
- 
+
   return {
     lat: parseFloat(data[0].lat),
     lng: parseFloat(data[0].lon),
   };
 }
- 
+
 /* ================= KAPELY ================= */
 type Band =
   | "Kupodivu"
@@ -128,7 +126,7 @@ type Band =
   | "Poletíme?"
   | "The People"
   | "Ostatní";
- 
+
 const bands: Band[] = [
   "Kupodivu",
   "Big Band Lanškroun",
@@ -137,7 +135,7 @@ const bands: Band[] = [
   "The People",
   "Ostatní",
 ];
- 
+
 const bandColors: Record<Band, string> = {
   Kupodivu: "#1e88e5",
   "Big Band Lanškroun": "#d32f2f",
@@ -146,7 +144,7 @@ const bandColors: Record<Band, string> = {
   "The People": "#ff6582",
   Ostatní: "#616161",
 };
- 
+
 /* ================= DATA ================= */
 type Concert = {
   id: string;
@@ -154,23 +152,23 @@ type Concert = {
   lat: number;
   lng: number;
 };
- 
+
 let concerts: Concert[] = [];
- 
+
 async function loadConcertsFromDB(): Promise<Concert[]> {
   const { data, error } = await supabase
     .from("concerts")
     .select("id, band, lat, lng");
- 
+
   if (error) {
     console.error("Supabase load error:", error);
     alert("Nepodařilo se načíst koncerty z databáze. Detaily v konzoli.");
     return [];
   }
- 
+
   return data as Concert[];
 }
- 
+
 async function insertConcertToDB(concert: Concert): Promise<boolean> {
   const { error } = await supabase.from("concerts").insert({
     id: concert.id,
@@ -178,7 +176,7 @@ async function insertConcertToDB(concert: Concert): Promise<boolean> {
     lat: concert.lat,
     lng: concert.lng,
   });
- 
+
   if (error) {
     console.error("Supabase insert error:", error);
     alert("Koncert se nepodařilo uložit. Detaily v konzoli.");
@@ -186,10 +184,10 @@ async function insertConcertToDB(concert: Concert): Promise<boolean> {
   }
   return true;
 }
- 
+
 async function deleteConcertFromDB(id: string): Promise<boolean> {
   const { error } = await supabase.from("concerts").delete().eq("id", id);
- 
+
   if (error) {
     console.error("Supabase delete error:", error);
     alert("Koncert se nepodařilo smazat. Detaily v konzoli.");
@@ -197,7 +195,7 @@ async function deleteConcertFromDB(id: string): Promise<boolean> {
   }
   return true;
 }
- 
+
 /* ================= MARKERY ================= */
 const markersByBand: Record<Band, L.CircleMarker[]> = {
   Kupodivu: [],
@@ -207,7 +205,7 @@ const markersByBand: Record<Band, L.CircleMarker[]> = {
   "The People": [],
   Ostatní: [],
 };
- 
+
 const activeBands: Record<Band, boolean> = {
   Kupodivu: true,
   "Big Band Lanškroun": true,
@@ -216,7 +214,7 @@ const activeBands: Record<Band, boolean> = {
   "The People": true,
   Ostatní: true,
 };
- 
+
 /* ================= CREATE ================= */
 async function createConcert(band: Band, lat: number, lng: number) {
   const concert: Concert = {
@@ -225,18 +223,18 @@ async function createConcert(band: Band, lat: number, lng: number) {
     lat,
     lng,
   };
- 
+
   const ok = await insertConcertToDB(concert);
   if (!ok) return;
- 
+
   concerts.push(concert);
   addConcertMarker(concert);
   renderLegend();
 }
- 
+
 /* ================= MARKER ================= */
 const deletePopup = L.popup();
- 
+
 function addConcertMarker(concert: Concert) {
   const marker = L.circleMarker([concert.lat, concert.lng], {
     radius: MARKER_RADIUS,
@@ -244,9 +242,9 @@ function addConcertMarker(concert: Concert) {
     fillColor: bandColors[concert.band],
     fillOpacity: 0.9,
   }).addTo(map);
- 
+
   markersByBand[concert.band].push(marker);
- 
+
   marker.on("contextmenu", (e: any) => {
     if (!isAuthenticated) return;
     L.DomEvent.stop(e);
@@ -254,12 +252,12 @@ function addConcertMarker(concert: Concert) {
       .setLatLng(e.latlng)
       .setContent(`<button id="del">Smazat bod</button>`)
       .openOn(map);
- 
+
     setTimeout(() => {
       document.getElementById("del")!.onclick = async () => {
         const ok = await deleteConcertFromDB(concert.id);
         if (!ok) return;
- 
+
         map.removeLayer(marker);
         markersByBand[concert.band] = markersByBand[concert.band].filter(
           (m) => m !== marker
@@ -271,11 +269,11 @@ function addConcertMarker(concert: Concert) {
     }, 0);
   });
 }
- 
+
 /* ================= LEGENDA ================= */
 const legend = L.control({ position: "topright" });
 let legendContainer: HTMLDivElement;
- 
+
 legend.onAdd = () => {
   legendContainer = L.DomUtil.create("div");
   legendContainer.style.background = "white";
@@ -286,13 +284,13 @@ legend.onAdd = () => {
   renderLegend();
   return legendContainer;
 };
- 
+
 legend.addTo(map);
- 
+
 function renderLegend() {
   if (!legendContainer) return;
   legendContainer.innerHTML = "";
- 
+
   // Jednotlivé kapely
   bands.forEach((band) => {
     const count = concerts.filter((c) => c.band === band).length;
@@ -315,7 +313,7 @@ function renderLegend() {
     };
     legendContainer.appendChild(item);
   });
- 
+
   // Souhrnný řádek s celkovým počtem
   const total = concerts.length;
   const totalRow = document.createElement("div");
@@ -326,13 +324,13 @@ function renderLegend() {
   totalRow.textContent = `Celkem: ${total}`;
   legendContainer.appendChild(totalRow);
 }
- 
+
 /* ================= MAP RIGHT CLICK / LONG PRESS ================= */
 const bandMenuPopup = L.popup();
- 
+
 map.on("contextmenu", (e: any) => {
   if (!isAuthenticated) return;
- 
+
   const html = `
     <div style="display:flex;flex-direction:column;gap:6px;">
       ${bands
@@ -349,9 +347,9 @@ map.on("contextmenu", (e: any) => {
         .join("")}
     </div>
   `;
- 
+
   bandMenuPopup.setLatLng(e.latlng).setContent(html).openOn(map);
- 
+
   setTimeout(() => {
     document.querySelectorAll("[data-band]").forEach((btn) =>
       btn.addEventListener("click", () => {
@@ -362,57 +360,57 @@ map.on("contextmenu", (e: any) => {
     );
   }, 0);
 });
- 
+
 /* ================= SIDEBAR GEO ================= */
 document.getElementById("find-place")?.addEventListener("click", async () => {
   if (!isAuthenticated) return;
- 
+
   const city = (
     document.getElementById("sidebar-city") as HTMLInputElement
   ).value.trim();
   if (!city) return alert("Zadej město");
- 
+
   const result = await geocodeCity(city);
   if (!result) return alert("Město nenalezeno");
- 
+
   if (previewMarker) map.removeLayer(previewMarker);
- 
+
   previewLatLng = { lat: result.lat, lng: result.lng };
- 
+
   previewMarker = L.marker([result.lat, result.lng], {
     draggable: true,
     icon: previewIcon,
   }).addTo(map);
- 
+
   map.setView([result.lat, result.lng], 11);
- 
+
   previewMarker.on("drag", (e) => {
     const pos = (e.target as L.Marker).getLatLng();
     previewLatLng = { lat: pos.lat, lng: pos.lng };
   });
- 
+
   (document.getElementById("confirm-panel") as HTMLElement).style.display =
     "block";
- 
+
   closeSidebar();
 });
- 
+
 /* ================= CONFIRM / CANCEL ================= */
 document.getElementById("confirm-concert")?.addEventListener("click", async () => {
   if (!previewLatLng) return;
- 
+
   const band = (document.getElementById("sidebar-band") as HTMLSelectElement)
     .value as Band;
- 
+
   await createConcert(band, previewLatLng.lat, previewLatLng.lng);
- 
+
   cleanupPreview();
 });
- 
+
 document
   .getElementById("cancel-concert")
   ?.addEventListener("click", cleanupPreview);
- 
+
 function cleanupPreview() {
   if (previewMarker) map.removeLayer(previewMarker);
   previewMarker = null;
@@ -420,15 +418,14 @@ function cleanupPreview() {
   (document.getElementById("confirm-panel") as HTMLElement).style.display =
     "none";
 }
- 
+
 /* ================= INIT ================= */
 async function initApp() {
   concerts = await loadConcertsFromDB();
- 
+
   concerts.forEach(addConcertMarker);
   renderLegend();
   renderAuthUI();
 }
- 
+
 initApp();
- 
