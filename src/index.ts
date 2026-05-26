@@ -8,6 +8,10 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+/* ================= DETEKCE MOBILU ================= */
+// Použije se pro velikost bodů — na mobilu chceme větší pro snadnější trefení
+const isMobile = window.matchMedia("(max-width: 768px)").matches;
+const MARKER_RADIUS = isMobile ? 11 : 8;
 
 /* ================= MAPA ================= */
 const map = L.map("map").setView([49.8175, 15.473], 7);
@@ -15,6 +19,24 @@ const map = L.map("map").setView([49.8175, 15.473], 7);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "&copy; OpenStreetMap",
 }).addTo(map);
+
+/* ================= HAMBURGER / SIDEBAR ================= */
+const appEl = document.getElementById("app")!;
+const hamburgerBtn = document.getElementById("hamburger")!;
+const sidebarCloseBtn = document.getElementById("sidebar-close")!;
+const sidebarOverlay = document.getElementById("sidebar-overlay")!;
+
+function openSidebar() {
+  appEl.classList.add("sidebar-open");
+}
+
+function closeSidebar() {
+  appEl.classList.remove("sidebar-open");
+}
+
+hamburgerBtn.addEventListener("click", openSidebar);
+sidebarCloseBtn.addEventListener("click", closeSidebar);
+sidebarOverlay.addEventListener("click", closeSidebar);
 
 /* ================= AUTH ================= */
 const AUTH_KEY = "isAuthenticated";
@@ -29,7 +51,7 @@ const previewIcon = L.divIcon({
   className: "",
   html: `<div class="preview-marker"></div>`,
   iconSize: [16, 16],
-  iconAnchor: [8, 8], // střed
+  iconAnchor: [8, 8],
 });
 
 /* ================= LOGIN UI ================= */
@@ -199,7 +221,6 @@ async function createConcert(band: Band, lat: number, lng: number) {
     lng,
   };
 
-  // Nejdřív zápis do DB, až po úspěchu lokální stav + marker
   const ok = await insertConcertToDB(concert);
   if (!ok) return;
 
@@ -213,7 +234,7 @@ const deletePopup = L.popup();
 
 function addConcertMarker(concert: Concert) {
   const marker = L.circleMarker([concert.lat, concert.lng], {
-    radius: 8,
+    radius: MARKER_RADIUS,
     color: bandColors[concert.band],
     fillColor: bandColors[concert.band],
     fillOpacity: 0.9,
@@ -231,7 +252,6 @@ function addConcertMarker(concert: Concert) {
 
     setTimeout(() => {
       document.getElementById("del")!.onclick = async () => {
-        // Nejdřív DB, až po úspěchu odstraníme z mapy a stavu
         const ok = await deleteConcertFromDB(concert.id);
         if (!ok) return;
 
@@ -272,6 +292,7 @@ function renderLegend() {
     const item = document.createElement("div");
     item.style.opacity = activeBands[band] ? "1" : "0.4";
     item.style.cursor = "pointer";
+    item.style.padding = "4px 0"; // o kapku větší dotyková plocha
     item.innerHTML = `
       <span style="display:flex;align-items:center;">
         <span style="width:12px;height:12px;background:${bandColors[band]};
@@ -289,7 +310,8 @@ function renderLegend() {
   });
 }
 
-/* ================= MAP RIGHT CLICK ================= */
+/* ================= MAP RIGHT CLICK / LONG PRESS ================= */
+// Na mobilu Leaflet long-press emituje 'contextmenu' event – funguje stejně
 const bandMenuPopup = L.popup();
 
 map.on("contextmenu", (e: any) => {
@@ -303,7 +325,8 @@ map.on("contextmenu", (e: any) => {
             <button data-band="${b}" style="
               background:${bandColors[b]};
               color:white;border:none;border-radius:4px;
-              padding:6px;cursor:pointer;text-align:left;">
+              padding:8px 10px;cursor:pointer;text-align:left;
+              min-height:40px;font-size:14px;">
               ${b}
             </button>`
         )
@@ -347,15 +370,16 @@ document.getElementById("find-place")?.addEventListener("click", async () => {
 
   map.setView([result.lat, result.lng], 11);
 
-  // při tahu aktualizujeme uloženou pozici
   previewMarker.on("drag", (e) => {
     const pos = (e.target as L.Marker).getLatLng();
     previewLatLng = { lat: pos.lat, lng: pos.lng };
   });
 
-  // zobraz potvrzovací panel
   (document.getElementById("confirm-panel") as HTMLElement).style.display =
     "block";
+
+  // Na mobilu zavřeme sidebar, aby uživatel viděl mapu a mohl s preview pohnout
+  closeSidebar();
 });
 
 /* ================= CONFIRM / CANCEL ================= */
@@ -383,9 +407,7 @@ function cleanupPreview() {
 }
 
 /* ================= INIT ================= */
-
 async function initApp() {
-  // POZOR: přiřazujeme do GLOBÁLNÍ `concerts`, žádné `const concerts = ...`
   concerts = await loadConcertsFromDB();
 
   concerts.forEach(addConcertMarker);

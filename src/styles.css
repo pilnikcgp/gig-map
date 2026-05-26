@@ -12,15 +12,17 @@ body {
   display: flex;
   height: 100vh;
   width: 100vw;
+  position: relative;
 }
 
-/* ===== LEVÝ PANEL ===== */
+/* ===== LEVÝ PANEL (DESKTOP) ===== */
 #sidebar {
   width: 300px;
   padding: 12px;
   background: #f5f5f5;
   box-sizing: border-box;
   overflow-y: auto;
+  flex-shrink: 0;
 }
 
 /* ===== MAPA ===== */
@@ -29,23 +31,24 @@ body {
   height: 100%;
 }
 
-/* ===== FORM PRVKY (sjednocené) ===== */
+/* ===== FORM PRVKY ===== */
 #sidebar input,
 #sidebar select,
 #sidebar button {
   width: 100%;
-  padding: 6px;
+  padding: 8px;
   margin-bottom: 8px;
   box-sizing: border-box;
   font-family: inherit;
+  font-size: 14px;
 }
 
-/* ===== TLAČÍTKO ===== */
 #sidebar button {
   margin-top: 4px;
   cursor: pointer;
 }
 
+/* ===== PREVIEW MARKER ===== */
 .preview-marker {
   width: 16px;
   height: 16px;
@@ -58,4 +61,106 @@ body {
 
 .preview-marker:active {
   cursor: grabbing;
+}
+
+/* ===== HAMBURGER (jen na mobilu) ===== */
+#hamburger {
+  display: none;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
+  width: 44px;
+  height: 44px;
+  background: white;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  font-size: 22px;
+  line-height: 1;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== OVERLAY pro zavření kliknutím mimo sidebar ===== */
+#sidebar-overlay {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 998;
+}
+
+/* ===== MOBIL ===== */
+@media (max-width: 768px) {
+  #hamburger {
+    display: flex;
+  }
+
+  /* Sidebar je defaultně zasunutý mimo obrazovku, vysouvá se zleva */
+  #sidebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 85%;
+    max-width: 320px;
+    z-index: 999;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
+    padding-top: 60px; /* místo pro tlačítko zavření nad obsahem */
+  }
+
+  /* Když má #app třídu .sidebar-open → sidebar vidět */
+  #app.sidebar-open #sidebar {
+    transform: translateX(0);
+  }
+
+  #app.sidebar-open #sidebar-overlay {
+    display: block;
+  }
+
+  /* Větší dotyková plocha pro prvky v sidebaru */
+  #sidebar input,
+  #sidebar select,
+  #sidebar button {
+    padding: 12px;
+    font-size: 16px; /* 16px zabrání zoomování na iOS Safari */
+    min-height: 44px;
+  }
+
+  /* Zavírací X v sidebaru */
+  #sidebar-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #555;
+    padding: 0;
+    line-height: 1;
+    margin: 0;
+    /* Override sidebaru pravidel */
+    width: 36px !important;
+    margin-bottom: 0 !important;
+  }
+}
+
+/* ===== LEAFLET POPUP – větší tlačítka na mobilu ===== */
+@media (max-width: 768px) {
+  .leaflet-popup-content button {
+    padding: 10px 14px !important;
+    font-size: 15px !important;
+    min-height: 44px !important;
+  }
 }

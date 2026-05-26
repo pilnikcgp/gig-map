@@ -2,13 +2,23 @@
 <html lang="cs">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Mapa koncertů</title>
   </head>
 
   <body>
     <div id="app">
+      <!-- ===== HAMBURGER (jen mobile) ===== -->
+      <button id="hamburger" aria-label="Otevřít menu">☰</button>
+
+      <!-- ===== OVERLAY pro mobil ===== -->
+      <div id="sidebar-overlay"></div>
+
       <!-- ===== SIDEBAR ===== -->
       <div id="sidebar">
+        <!-- Zavírací X pro mobil -->
+        <button id="sidebar-close" aria-label="Zavřít menu">×</button>
+
         <!-- AUTH -->
         <div id="auth"></div>
 
@@ -45,9 +55,8 @@
           <hr />
 
           <p style="font-size: 13px; line-height: 1.4">
-            ➕ <strong>Přidání:</strong> pravý klik do mapy nebo vyhledání
-            města<br />
-            ❌ <strong>Smazání:</strong> pravý klik na bod
+            ➕ <strong>Přidání:</strong> pravý klik / dlouhé podržení do mapy nebo vyhledání města<br />
+            ❌ <strong>Smazání:</strong> pravý klik / dlouhé podržení na bod
           </p>
         </div>
       </div>
