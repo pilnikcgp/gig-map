@@ -13,8 +13,6 @@ const isMobile = window.matchMedia("(max-width: 768px)").matches;
 const MARKER_RADIUS = isMobile ? 8 : 6;
  
 /* ================= MAPA ================= */
-// zoomControl: false → vlastní zoom doprava dolů
-// attributionControl: false → vlastní atribuce doleva dolů (aby zoom nebyl překrytý)
 const map = L.map("map", {
   zoomControl: false,
   attributionControl: false,
@@ -294,6 +292,8 @@ legend.addTo(map);
 function renderLegend() {
   if (!legendContainer) return;
   legendContainer.innerHTML = "";
+ 
+  // Jednotlivé kapely
   bands.forEach((band) => {
     const count = concerts.filter((c) => c.band === band).length;
     const item = document.createElement("div");
@@ -315,6 +315,16 @@ function renderLegend() {
     };
     legendContainer.appendChild(item);
   });
+ 
+  // Souhrnný řádek s celkovým počtem
+  const total = concerts.length;
+  const totalRow = document.createElement("div");
+  totalRow.style.borderTop = "1px solid #ddd";
+  totalRow.style.marginTop = "6px";
+  totalRow.style.paddingTop = "6px";
+  totalRow.style.fontWeight = "bold";
+  totalRow.textContent = `Celkem: ${total}`;
+  legendContainer.appendChild(totalRow);
 }
  
 /* ================= MAP RIGHT CLICK / LONG PRESS ================= */
