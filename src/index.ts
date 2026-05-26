@@ -13,10 +13,15 @@ const isMobile = window.matchMedia("(max-width: 768px)").matches;
 const MARKER_RADIUS = isMobile ? 8 : 6;
  
 /* ================= MAPA ================= */
-// zoomControl: false → vlastní pozice níže
-const map = L.map("map", { zoomControl: false }).setView([49.8175, 15.473], 7);
+// zoomControl: false → vlastní zoom doprava dolů
+// attributionControl: false → vlastní atribuce doleva dolů (aby zoom nebyl překrytý)
+const map = L.map("map", {
+  zoomControl: false,
+  attributionControl: false,
+}).setView([49.8175, 15.473], 7);
  
 L.control.zoom({ position: "bottomright" }).addTo(map);
+L.control.attribution({ position: "bottomleft" }).addTo(map);
  
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "&copy; OpenStreetMap",
@@ -28,15 +33,15 @@ const hamburgerBtn = document.getElementById("hamburger")!;
 const sidebarCloseBtn = document.getElementById("sidebar-close")!;
 const sidebarOverlay = document.getElementById("sidebar-overlay")!;
  
-function openSidebar() {
-  appEl.classList.add("sidebar-open");
+function toggleSidebar() {
+  appEl.classList.toggle("sidebar-open");
 }
  
 function closeSidebar() {
   appEl.classList.remove("sidebar-open");
 }
  
-hamburgerBtn.addEventListener("click", openSidebar);
+hamburgerBtn.addEventListener("click", toggleSidebar);
 sidebarCloseBtn.addEventListener("click", closeSidebar);
 sidebarOverlay.addEventListener("click", closeSidebar);
  
